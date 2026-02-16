@@ -10,11 +10,12 @@ int main() {
     size_t count = 0;
     size_t collisions = 0;
 
-    std::ifstream input("input.res");
+    std::ifstream input("C:\\Repos\\SimpleCPP\\modules\\SimpleUtils\\test\\input.res");
 
     if (!input.is_open()) return 0;
 
     std::unordered_set<size_t> seen;
+    std::unordered_set<std::string> seenStrings;
     seen.max_load_factor(0.7f);
 
     size_t hash = 0;
@@ -23,12 +24,15 @@ int main() {
 
     while (!input.eof()) {
         input >> x;
-        hash = shash::rotl(hash, std::numeric_limits<size_t>::digits / 3) ^ shash::distribute(getHash(x));
+        hash = getHash(x);
 
-        if (seen.find(hash) != seen.end()) {
-            collisions++;
-        } else {
-            seen.insert(hash);
+        if (seenStrings.find(x) == seenStrings.end()) {
+            if (seen.find(hash) != seen.end()) {
+                collisions++;
+            } else {
+                seen.insert(hash);
+            }
+            seenStrings.insert(x);
         }
 
         count++;
