@@ -18,14 +18,14 @@ struct TMultiMap : TAssociativeContainer<TKeyType, TValueType> {
 	TMultiMap(TInitializerList<TPair<TKeyType, TValueType>> init) {
 		m_Container.reserve(init.size());
 		for (auto& pair : init) {
-			m_Container.emplace(pair.first(), pair.second());
+			m_Container.emplace(pair.first, pair.second);
 		}
 	}
 
 	template <typename... TPairs>
 	explicit TMultiMap(TPairs&&... args) {
 		m_Container.reserve(sizeof...(TPairs));
-		(m_Container.emplace(std::forward<typename TPairs::KeyType>(args.key()), std::forward<typename TPairs::ValueType>(args.value())), ...);
+		(m_Container.emplace(std::forward<typename TPairs::KeyType>(args.first), std::forward<typename TPairs::ValueType>(args.second)), ...);
 	}
 
 	TMultiMap(const std::unordered_multimap<TKeyType, TValueType>& otr): m_Container(otr) {}
@@ -60,7 +60,7 @@ struct TMultiMap : TAssociativeContainer<TKeyType, TValueType> {
 		m_Container.reserve(amt);
 		for (size_t i = getSize(); i < amt; ++i) {
 			TPair<TKeyType, TValueType> pair = func();
-			m_Container.emplace(std::forward<TKeyType>(pair.key()), std::forward<TValueType>(pair.value()));
+			m_Container.emplace(std::forward<TKeyType>(pair.first), std::forward<TValueType>(pair.second));
 		}
 	}
 
@@ -106,7 +106,7 @@ struct TMultiMap : TAssociativeContainer<TKeyType, TValueType> {
 
 	virtual void push(const TPair<TKeyType, TValueType>& pair) override {
 		if constexpr (std::is_copy_constructible_v<TValueType>) {
-			m_Container.emplace(pair.key(), pair.value());
+			m_Container.emplace(pair.first, pair.second);
 		} else {
 			throw std::runtime_error("Type is not copyable!");
 		}
@@ -114,7 +114,7 @@ struct TMultiMap : TAssociativeContainer<TKeyType, TValueType> {
 
 	virtual void push(TPair<TKeyType, TValueType>&& pair) override {
 		if constexpr (std::is_move_constructible_v<TValueType>) {
-			m_Container.emplace(std::move(pair.key()), std::move(pair.value()));
+			m_Container.emplace(std::move(pair.first), std::move(pair.second));
 		} else {
 			throw std::runtime_error("Type is not moveable!");
 		}

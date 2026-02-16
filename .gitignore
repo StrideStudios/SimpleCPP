@@ -6,6 +6,9 @@
 !*.cpp
 !*.h
 
+# Resource Files
+!*.res
+
 # Cmake files
 !CMakeLists.txt
 !*.cmake

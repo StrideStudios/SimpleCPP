@@ -189,6 +189,17 @@ struct TSequenceContainer {
 	// Iterates through each element in reverse, const version
 	virtual void forEachReverse(const std::function<void(size_t, const TType&)>& func) const
 		NOT_GUARANTEED
+
+	template <typename TObjectType,
+		std::enable_if_t<std::is_base_of_v<TSequenceContainer, TObjectType>, int> = 0
+	>
+	friend size_t getHash(const TObjectType& container) {
+		size_t hash = container.getSize();
+		container.forEach([&](size_t, const TType& obj) {
+			shash::combine(hash, obj);
+		});
+		return hash;
+	}
 };
 
 // Designed to be a container with a key for indexing
