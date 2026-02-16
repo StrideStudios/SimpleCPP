@@ -37,8 +37,8 @@ int main() {
 
         count++;
     }
-    std::cout << "Total: " << count << std::endl;
-    std::cout << "Collision # is " << collisions << std::endl;
+    std::cout << "Total: " << count << " With " << (count - seenStrings.size()) << " Duplicates" << std::endl;
+    std::cout << "Collision # is " << collisions << " of " << seenStrings.size() << std::endl;
 
     return 0;
 }
