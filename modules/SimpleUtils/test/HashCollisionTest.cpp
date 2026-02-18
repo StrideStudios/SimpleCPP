@@ -5,9 +5,23 @@
 
 #include "sutil/Hashing.h"
 
+enum e1 {};
+enum class e2 {};
+enum class e3 : unsigned {};
+enum class e4 : int {};
+
 int main() {
 
-    size_t count = 0;
+    size_t size = 100;
+    std::string str("Hey Man");
+    size_t size2 = 5000;
+
+    //TODO: gives clang error 'Clangd: In template: call to function 'getHash' that is neither visible in the template definition nor found by argument-dependent lookup' but still compiles on MSVC
+    size_t hash = hashCombine(size, str, size2);
+
+    std::cout << "Hello " << hash << std::endl;
+
+    /*size_t count = 0;
     size_t collisions = 0;
 
     std::ifstream input("C:\\Repos\\SimpleCPP\\modules\\SimpleUtils\\test\\input.res");
@@ -38,7 +52,7 @@ int main() {
         count++;
     }
     std::cout << "Total: " << count << " With " << (count - seenStrings.size()) << " Duplicates" << std::endl;
-    std::cout << "Collision # is " << collisions << " of " << seenStrings.size() << std::endl;
+    std::cout << "Collision # is " << collisions << " of " << seenStrings.size() << std::endl;*/
 
     return 0;
 }
