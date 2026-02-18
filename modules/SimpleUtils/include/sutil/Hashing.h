@@ -36,11 +36,14 @@ namespace shash {
 #endif
 }
 
+struct SHashArchive;
 
 namespace sutil {
 #if CXX_VERSION >= 20
     template <typename TType>
-    concept is_hashable_v = requires(TType a) { {getHash(a)} -> std::convertible_to<size_t>; };
+    concept is_hashable_v = requires(SHashArchive& inArchive, TType a) {
+        { inArchive << a } -> std::same_as<SHashArchive&>;
+    };
 
     template <typename TType>
     struct is_hashable : std::bool_constant<is_hashable_v<TType>> {};
@@ -51,8 +54,11 @@ namespace sutil {
     template <typename TType>
     struct is_hashable
     <TType,
-        std::void_t<decltype(getHash(std::declval<TType>()))>
-    > : std::true_type {};
+        std::void_t<decltype(std::declval<SHashArchive&>() << std::declval<TType>())>
+    >: std::is_same<
+        decltype(std::declval<SHashArchive&>() << std::declval<TType>()),
+        SHashArchive&
+    > {};
 
     template <typename TType>
     constexpr bool is_hashable_v = is_hashable<TType>::value;
