@@ -36,6 +36,7 @@ namespace shash {
 #endif
 }
 
+
 namespace sutil {
 #if CXX_VERSION >= 20
     template <typename TType>
@@ -58,50 +59,50 @@ namespace sutil {
 #endif
 }
 
-template <typename TType, typename... TArgs>
-constexpr size_t hashCombine(const TType& in, TArgs&&... args) noexcept {
+struct SHashArchive {
 
-    auto combine = [](size_t& fst, size_t snd) noexcept {
-#if CXX_VERSION >= 20
-        fst = std::rotl(fst, std::numeric_limits<size_t>::digits / 3) ^ snd;
-#else
-        fst = shash::rotl(fst, std::numeric_limits<size_t>::digits / 3) ^ snd;
-#endif
-    };
-
-    size_t hash = getHash(in);
-    (combine(hash, getHash(std::forward<TArgs>(args))), ...);
-
-    return shash::distribute(hash);
-}
-
-template <typename TType,
-    std::enable_if_t<std::is_arithmetic_v<TType>, int> = 0
->
-size_t getHash(const TType& v) noexcept {
-    return shash::distribute(v);
-}
-
-// Handle enums, which should be able to be hashed similar to arithmetic types
-template <typename TType,
-    std::enable_if_t<std::is_enum_v<TType>, int> = 0
->
-size_t getHash(const TType& v) noexcept {
-    using EnumType = std::underlying_type_t<TType>;
-    return getHash(static_cast<EnumType>(v));
-}
-
-// Hash pointers by essentially using the raw memory address
-template <typename T>
-size_t getHash(T* ptr) noexcept {
-    return getHash(reinterpret_cast<size_t>(ptr));
-}
-
-// Hash each byte of string using combine
-inline size_t getHash(const std::string& str) noexcept {
-    size_t hash = str.length();
-    for (char c : str) {
-        hash = hashCombine(hash, shash::distribute(c));
+    template <typename TType,
+        std::enable_if_t<std::is_arithmetic_v<TType>, int> = 0
+    >
+    friend SHashArchive& operator<<(SHashArchive& inArhive, const TType inValue) {
+        inArhive += inValue;
+        return inArhive;
     }
-    return hash;
-}
+
+    // Handle enums, which should be able to be hashed similar to arithmetic types
+    template <typename TType,
+        std::enable_if_t<std::is_enum_v<TType>, int> = 0
+    >
+    friend SHashArchive& operator<<(SHashArchive& inArchive, const TType& v) noexcept {
+        using EnumType = std::underlying_type_t<TType>;
+        inArchive << static_cast<EnumType>(v);
+        return inArchive;
+    }
+
+    // Hash pointers by essentially using the raw memory address
+    template <typename TType>
+    friend SHashArchive& operator<<(SHashArchive& inArchive, TType* ptr) noexcept {
+        inArchive << reinterpret_cast<size_t>(ptr);
+        return inArchive;
+    }
+
+    // Hash each byte of string using combine
+    friend SHashArchive& operator<<(SHashArchive& inArchive, const std::string& str) noexcept {
+        for (const auto c : str) {
+            inArchive << c;
+        }
+        return inArchive;
+    }
+
+    [[nodiscard]] size_t get() const { return hash; }
+
+    void operator+=(size_t inHash) {
+#if CXX_VERSION >= 20
+        hash = std::rotl(hash, std::numeric_limits<size_t>::digits / 3) ^ shash::distribute(inHash);
+#else
+        hash = shash::rotl(hash, std::numeric_limits<size_t>::digits / 3) ^ shash::distribute(inHash);
+#endif
+    }
+
+    size_t hash = 0;
+};

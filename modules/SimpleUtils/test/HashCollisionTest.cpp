@@ -16,8 +16,10 @@ int main() {
     std::string str("Hey Man");
     size_t size2 = 5000;
 
-    //TODO: gives clang error 'Clangd: In template: call to function 'getHash' that is neither visible in the template definition nor found by argument-dependent lookup' but still compiles on MSVC
-    size_t hash = hashCombine(size, str, size2);
+    SHashArchive hashArchive;
+    hashArchive << size << str << size2;
+
+    const size_t hash = hashArchive.get();
 
     std::cout << "Hello " << hash << std::endl;
 
