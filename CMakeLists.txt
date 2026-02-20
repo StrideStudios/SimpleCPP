@@ -113,8 +113,7 @@ if(SIMPLECPP_TEST)
     enable_testing()
 endif()
 
-add_library(SimpleCPP INTERFACE
-        modules/SimpleUtils/include/sutil/Archive.h)
+add_library(SimpleCPP INTERFACE)
 
 # Create a list of modules so compile definitions can be created in each module
 set(SIMPLECPP_MODULES
