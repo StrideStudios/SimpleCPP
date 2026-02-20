@@ -16,12 +16,14 @@ int main() {
     std::string str("Hey Man");
     size_t size2 = 5000;
 
-    SHashArchive hashArchive;
-    hashArchive << size << str << size2;
+    {
+        CHashArchive hashArchive;
+        hashArchive << size << str << size2;
 
-    const size_t hash = hashArchive.get();
+        const size_t hash = hashArchive.get();
 
-    std::cout << "Hello " << hash << std::endl;
+        std::cout << hash << std::endl;
+    }
 
     /*size_t count = 0;
     size_t collisions = 0;

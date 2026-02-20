@@ -1,4 +1,5 @@
 #pragma once
+#include "Archive.h"
 
 /*
  * Contains various hashing utilities needed for unique identification
@@ -36,13 +37,13 @@ namespace shash {
 #endif
 }
 
-struct SHashArchive;
+class CHashArchive;
 
 namespace sutil {
 #if CXX_VERSION >= 20
     template <typename TType>
-    concept is_hashable_v = requires(SHashArchive& inArchive, TType a) {
-        { inArchive << a } -> std::same_as<SHashArchive&>;
+    concept is_hashable_v = requires(CHashArchive& inArchive, TType a) {
+        { inArchive << a } -> std::same_as<CHashArchive&>;
     };
 
     template <typename TType>
@@ -54,10 +55,10 @@ namespace sutil {
     template <typename TType>
     struct is_hashable
     <TType,
-        std::void_t<decltype(std::declval<SHashArchive&>() << std::declval<TType>())>
+        std::void_t<decltype(std::declval<CHashArchive&>() << std::declval<TType>())>
     >: std::is_same<
-        decltype(std::declval<SHashArchive&>() << std::declval<TType>()),
-        SHashArchive&
+        decltype(std::declval<CHashArchive&>() << std::declval<TType>()),
+        CHashArchive&
     > {};
 
     template <typename TType>
@@ -65,40 +66,9 @@ namespace sutil {
 #endif
 }
 
-struct SHashArchive {
+class CHashArchive : public COutputArchive {
 
-    template <typename TType,
-        std::enable_if_t<std::is_arithmetic_v<TType>, int> = 0
-    >
-    friend SHashArchive& operator<<(SHashArchive& inArhive, const TType inValue) {
-        inArhive += inValue;
-        return inArhive;
-    }
-
-    // Handle enums, which should be able to be hashed similar to arithmetic types
-    template <typename TType,
-        std::enable_if_t<std::is_enum_v<TType>, int> = 0
-    >
-    friend SHashArchive& operator<<(SHashArchive& inArchive, const TType& v) noexcept {
-        using EnumType = std::underlying_type_t<TType>;
-        inArchive << static_cast<EnumType>(v);
-        return inArchive;
-    }
-
-    // Hash pointers by essentially using the raw memory address
-    template <typename TType>
-    friend SHashArchive& operator<<(SHashArchive& inArchive, TType* ptr) noexcept {
-        inArchive << reinterpret_cast<size_t>(ptr);
-        return inArchive;
-    }
-
-    // Hash each byte of string using combine
-    friend SHashArchive& operator<<(SHashArchive& inArchive, const std::string& str) noexcept {
-        for (const auto c : str) {
-            inArchive << c;
-        }
-        return inArchive;
-    }
+public:
 
     [[nodiscard]] size_t get() const { return hash; }
 
@@ -110,5 +80,29 @@ struct SHashArchive {
 #endif
     }
 
+    void write(const void* inValue, const size_t inElementSize, const size_t inCount) override {
+        auto bytes = static_cast<const uint8_t*>(inValue);
+
+        size_t total = inElementSize * inCount;
+
+        while (total >= sizeof(size_t)) {
+            size_t chunk;
+            std::memcpy(&chunk, bytes, sizeof(size_t));
+
+            *this += chunk;
+
+            bytes += sizeof(size_t);
+            total -= sizeof(size_t);
+        }
+
+        if (total > 0) {
+            size_t remainder = 0;
+            std::memcpy(&remainder, bytes, total);
+            *this += remainder;
+        }
+    }
+
+private:
+    
     size_t hash = 0;
 };
